@@ -70,7 +70,20 @@ def perform_laplacian_of_gaussian(image, kernel_size=5, sigma=0):
     return laplacian
 
 
-def apply_histogram_equalization(image):
-    equalized_image = cv2.equalizeHist(image)
+def perform_histogram_equalization(image):
+    equalized_image = cv2.equalizeHist(np.float32(image))
+
+    return equalized_image
+
+
+def perform_histogram_equalization(image):
+    # Convert the image to YUV color space
+    yuv_image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
+
+    # Apply histogram equalization to the Y channel (luminance)
+    yuv_image[:,:,0] = cv2.equalizeHist(yuv_image[:,:,0])
+
+    # Convert the image back to BGR color space
+    equalized_image = cv2.cvtColor(yuv_image, cv2.COLOR_YUV2BGR)
 
     return equalized_image

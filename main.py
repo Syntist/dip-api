@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from model.dip import perform_fft, perform_dct, perform_walsh_transform, perform_laplacian_of_gaussian
+from model.dip import *
 from utils.image import image_reader, result_bytes
 
 app = FastAPI()
@@ -56,7 +56,7 @@ async def process_walsh(file: UploadFile):
     
 
 @app.post("/process_laplacian")
-async def process_walsh(kernel_size: int, sigma: int, file: UploadFile):
+async def process_laplacian(kernel_size: int, sigma: int, file: UploadFile):
     try:
         image = await image_reader(file)
 
@@ -69,15 +69,15 @@ async def process_walsh(kernel_size: int, sigma: int, file: UploadFile):
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/process_laplacian")
-async def process_walsh(kernel_size: int, sigma: int, file: UploadFile):
+    
+@app.post("/process_equalization")
+async def process_histogram_equalization(file: UploadFile):
     try:
         image = await image_reader(file)
 
-        log = perform_laplacian_of_gaussian(image, kernel_size, sigma)
+        eq = perform_histogram_equalization(image)
 
-        return StreamingResponse(result_bytes(log), media_type="image/png")
+        return StreamingResponse(result_bytes(eq), media_type="image/png")
     
     except Exception as e:
         print(e)
