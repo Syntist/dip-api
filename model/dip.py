@@ -50,24 +50,64 @@ def perform_dct(image):
 
     return magnitude_spectrum_normalized
 
-def perform_walsh_transform(image):
-    gray_image = np.mean(image, axis=-1)
-    N = len(gray_image)
-    H = hadamard(N) / np.sqrt(N)
-    return np.dot(H, gray_image)
+def perform_walsh(image):
+    img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    img_normalized = img_gray / 255.0
+    rows, cols = img_gray.shape
+    
+    dimension = 2 ** int(np.ceil(np.log2(max(rows, cols))))
+    
+    resized_img = cv2.resize(img_normalized, (dimension, dimension))
+
+    transform_matrix = hadamard(dimension)
+
+    # Apply the Walsh-Hadamard transform
+    transform_result = np.dot(np.dot(transform_matrix, resized_img), transform_matrix.T)
+
+    return transform_result
+
+def perform_haar(image):
+    img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    transformed_image = np.copy(img_gray)
+    rows, cols = transformed_image.shape
+
+    # Transform along rows
+    for i in range(rows):
+        j = 0
+        while j < cols:
+            avg = (transformed_image[i, j] + transformed_image[i, j + 1]) / 2.0
+            diff = (transformed_image[i, j] - transformed_image[i, j + 1]) / 2.0
+            transformed_image[i, j] = avg
+            transformed_image[i, j + 1] = diff
+            j += 2
+
+    # Transform along columns
+    for j in range(cols):
+        i = 0
+        while i < rows:
+            avg = (transformed_image[i, j] + transformed_image[i + 1, j]) / 2.0
+            diff = (transformed_image[i, j] - transformed_image[i + 1, j]) / 2.0
+            transformed_image[i, j] = avg
+            transformed_image[i + 1, j] = diff
+            i += 2
+
+    return transformed_image
 
 
-def perform_laplacian_of_gaussian(image, kernel_size=5, sigma=0):
-    # Apply Gaussian blur
-    blurred_image = cv2.GaussianBlur(image, (kernel_size, kernel_size), sigma)
+def perform_laplacian_of_gaussian(image, sigma=0):
+    b, g, r = cv2.split(image)
 
-    # Apply Laplacian operator
-    laplacian = cv2.Laplacian(blurred_image, cv2.CV_64F)
+    # Apply LoG filter to each channel
+    b_filtered = cv2.Laplacian(cv2.GaussianBlur(b, (0, 0), sigma), cv2.CV_64F)
+    g_filtered = cv2.Laplacian(cv2.GaussianBlur(g, (0, 0), sigma), cv2.CV_64F)
+    r_filtered = cv2.Laplacian(cv2.GaussianBlur(r, (0, 0), sigma), cv2.CV_64F)
 
-    # Convert the result to 8-bit for display
-    laplacian = np.uint8(np.absolute(laplacian))
+    # Combine channels
+    result = cv2.merge([b_filtered, g_filtered, r_filtered])
 
-    return laplacian
+    result_display = cv2.normalize(result, None, 0, 255, cv2.NORM_MINMAX)
+
+    return result_display.astype(np.uint8)
 
 
 def perform_histogram_equalization(image):

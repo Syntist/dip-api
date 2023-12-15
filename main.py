@@ -47,22 +47,33 @@ async def process_walsh(file: UploadFile):
     try:
         image = await image_reader(file)
 
-        dct = perform_walsh_transform(image)
+        walsh = perform_walsh(image)
 
-        return StreamingResponse(result_bytes(dct), media_type="image/png")
+        return StreamingResponse(result_bytes(walsh), media_type="image/png")
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-
-@app.post("/process_laplacian")
-async def process_laplacian(kernel_size: int, sigma: int, file: UploadFile):
+@app.post("/process_haar")
+async def process_walsh(file: UploadFile):
     try:
         image = await image_reader(file)
 
-        log = perform_laplacian_of_gaussian(image, kernel_size, sigma)
+        haar = perform_haar(image)
 
-        print(log)
+        return StreamingResponse(result_bytes(haar), media_type="image/png")
+    
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+@app.post("/process_laplacian")
+async def process_laplacian(sigma: int, file: UploadFile):
+    try:
+        image = await image_reader(file)
+
+        log = perform_laplacian_of_gaussian(image, sigma=sigma)
 
         return StreamingResponse(result_bytes(log), media_type="image/png")
     
